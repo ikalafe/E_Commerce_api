@@ -13,6 +13,9 @@ app.use(morgan("tiny"));
 app.use(cors());
 app.options("*", cors());
 
+const authRouter = require("./routes/auth");
+app.use("/auth", authRouter);
+
 const hostname = env.HOST_NAME;
 const port = env.PORT;
 const mongodb = env.MONGODB_CONNECTION_STRING;
@@ -20,7 +23,7 @@ const mongodb = env.MONGODB_CONNECTION_STRING;
 mongoose
   .connect(mongodb)
   .then(() => {
-    console.log("Connected to Database");
+    console.log("Connected to Database.");
   })
   .catch((error) => {
     console.error(error);
@@ -28,6 +31,7 @@ mongoose
 
 app.listen(port, hostname, async () => {
   console.log(`Server running at http://${hostname}:${port}`);
+  console.log("connecting to database...");
 });
 
 // 1:37:25
