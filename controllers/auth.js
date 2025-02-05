@@ -20,11 +20,20 @@ exports.register = async (req, res) => {
     user = await user.save();
 
     if (!user) {
-      return res.status(500);
+      return res.status(500).json({
+        type: "Internal Server Error",
+        message: "کاربر ایجاد نشد‌): لطفا بعدا دوباره تلاش کنید",
+      });
     }
 
-    return res.status(201).json(user );
+    return res.status(201).json(user);
   } catch (e) {
+    if (e.message.includes("email_1 dup key")) {
+      return res.status(409).json({
+        type: "Auth Error",
+        message: "کاربر با این ایمیل از قبل وجود دارد.",
+      });
+    }
     return res.status(500).json({ type: e.name, message: e.message });
   }
 };
@@ -36,5 +45,3 @@ exports.forgotPassword = async (req, res) => {};
 exports.verifyPasswordResetOtp = async (req, res) => {};
 
 exports.resetPassword = async (req, res) => {};
-
-// 5:02:34
