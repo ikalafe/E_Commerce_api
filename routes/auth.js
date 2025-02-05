@@ -2,14 +2,33 @@ const app = require("express");
 
 const router = app.Router();
 
-router.post("/login", (req, res) => {});
+const authController = require("../controllers/auth");
 
-router.post("/register", (req, res) => {});
+const { body } = require("express-validator");
 
-router.post("/forgot-password", (req, res) => {});
+const validateUser = [
+  body("name").not().isEmpty().withMessage("نام الزامی است."),
+  body("email").isEmail().withMessage("لطفا ایمیل معتبر وارد کنید."),
+  body("password")
+    .isLength({ min: 8 })
+    .withMessage("رمز عبور باید حداقل 8 کاراکتر باشد.")
+    .isStrongPassword()
+    .withMessage(
+      "رمز عبور باید حداقل ۸ کاراکتر باشد و شامل حداقل یک حرف بزرگ، یک عدد و یک کاراکتر خاص (!@#$%^&*) باشد."
+    ),
+  body("phone")
+    .isMobilePhone("fa-IR")
+    .withMessage("لطفا یک شماره تلفن معتبر وارد کنید."),
+];
 
-router.post("/verify-otp", (req, res) => {});
+router.post("/login", authController.login);
 
-router.post("/reset-password", (req, res) => {});
+router.post("/register",validateUser, authController.register);
+
+router.post("/forgot-password", authController.forgotPassword);
+
+router.post("/verify-otp", authController.verifyPasswordResetOtp);
+
+router.post("/reset-password", authController.resetPassword);
 
 module.exports = router;
