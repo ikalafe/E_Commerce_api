@@ -1,6 +1,8 @@
 const { validationResult } = require("express-validator");
 const { User } = require("../models/user");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { Token } = require("../models/token");
 
 exports.register = async (req, res) => {
   const errors = validationResult(req);
@@ -27,20 +29,60 @@ exports.register = async (req, res) => {
     }
 
     return res.status(201).json(user);
-  } catch (e) {
-    if (e.message.includes("email_1 dup key")) {
+  } catch (error) {
+    if (error.message.includes("email_1 dup key")) {
       return res.status(409).json({
         type: "Auth Error",
         message: "کاربر با این ایمیل از قبل وجود دارد.",
       });
     }
-    return res.status(500).json({ type: e.name, message: e.message });
+    return res.status(500).json({ type: error.name, message: error.message });
   }
 };
 
-exports.login = async (req, res) => {};
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        message: "کاربر پیدا نشد\nایمیل خود را بررسی کنید و دوباره امتحان کنید",
+      });
+    }
+    if (!bcrypt.compareSync(password, user.passwordHash)) {
+      return res.status(400).json({ message: "رمز عبور اشتبه است" });
+    }
 
-exports.forgotPassword = async (req, res) => {};
+    const accessToken = jwt.sign(
+      { id: user.id, isAdmin: user.isAdmin },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id, isAdmin: user.isAdmin },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    const token = await Token.findOne({ userId: user.id });
+    if (token) await token.deleteOne();
+    await new Token({
+      userId: user.id,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    }).save();
+
+    user.passwordHash = undefined;
+    return res.json({ ...user._doc, accessToken });
+  } catch (error) {
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  
+};
 
 exports.verifyPasswordResetOtp = async (req, res) => {};
 
