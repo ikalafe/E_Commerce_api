@@ -3,6 +3,7 @@ const { User } = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Token } = require("../models/token");
+const mailSender = require("../helper/email_sender");
 
 exports.register = async (req, res) => {
   const errors = validationResult(req);
@@ -80,10 +81,64 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.verifyToken = async (req, res) => {
+  try {
+    let accessToken = req.headers.authorization;
+    if (!accessToken) return res.json(false);
+    accessToken = accessToken.replace("Bearer", "").trim();
+
+    const token = await Token.findOne({ accessToken });
+    if (!token) return res.json(false);
+
+    const tokenData = jwt.decode(token.refreshToken);
+    const user = await User.findById(tokenData.id);
+    if (!user) return res.json(false);
+
+    const isValid = jwt.verify(
+      token.refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+    if (!isValid) return res.json(false);
+
+    return res.json(true);
+  } catch (error) {
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
-  
+  try {
+    const email = req.body.email;
+    const user = await User.findOne({ email });
+    console.log(email);
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "کاربر با این ایمیل پیدا نشد :(" });
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    user.resetPasswordOtp = otp;
+    user.resetPasswordOtpExpires = Date.now() + 600000;
+
+    await user.save();
+
+    const response = await mailSender.sendMail(
+      email,
+      "رمز عمور یکبار مصرف ارسال شد",
+      `رمز یکبار مصرف به ایمیلتان ارسال شد ${otp}`
+    );
+    return res.json({
+      message: response,
+    });
+  } catch (error) {
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
 };
 
 exports.verifyPasswordResetOtp = async (req, res) => {};
 
 exports.resetPassword = async (req, res) => {};
+
+// 6:34:39
