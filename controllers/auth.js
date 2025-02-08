@@ -126,9 +126,10 @@ exports.forgotPassword = async (req, res) => {
 
     const response = await mailSender.sendMail(
       email,
-      "رمز عمور یکبار مصرف ارسال شد",
-      `رمز یکبار مصرف به ایمیلتان ارسال شد ${otp}`
+      "بازنشانی رمز عبور.",
+      `رمز یکبار مصرف برایه: ${otp}`
     );
+    
     return res.json({
       message: response,
     });
