@@ -31,6 +31,7 @@ exports.register = async (req, res) => {
 
     return res.status(201).json(user);
   } catch (error) {
+    console.error("Error: ", error);
     if (error.message.includes("email_1 dup key")) {
       return res.status(409).json({
         type: "Auth Error",
@@ -77,6 +78,7 @@ exports.login = async (req, res) => {
     user.passwordHash = undefined;
     return res.json({ ...user._doc, accessToken });
   } catch (error) {
+    console.error("Error: ", error);
     return res.status(500).json({ type: error.name, message: error.message });
   }
 };
@@ -102,6 +104,7 @@ exports.verifyToken = async (req, res) => {
 
     return res.json(true);
   } catch (error) {
+    console.error("Error: ", error);
     return res.status(500).json({ type: error.name, message: error.message });
   }
 };
@@ -129,17 +132,46 @@ exports.forgotPassword = async (req, res) => {
       "بازنشانی رمز عبور.",
       `رمز یکبار مصرف برایه: ${otp}`
     );
-    
+
     return res.json({
       message: response,
     });
   } catch (error) {
+    console.error("Error: ", error);
     return res.status(500).json({ type: error.name, message: error.message });
   }
 };
 
-exports.verifyPasswordResetOtp = async (req, res) => {};
+exports.verifyPasswordResetOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "کاربر پیدا نشد ):" });
+    }
+    if (
+      user.resetPasswordOtp !== +otp ||
+      Date.now() > user.resetPasswordOtpExpires
+    ) {
+      return res.status(401).json({
+        message:
+          "کد تأیید نامعتبر است یا منقضی شده. لطفاً مجدداً درخواست ارسال کد دهید.",
+      });
+    }
+
+    user.resetPasswordOtp = 1;
+    user.resetPasswordOtpExpires = undefined;
+
+    user.save();
+
+    return res.json({ message: "کد تأیید با موفقیت تأیید شد." });
+  } catch (error) {
+    console.error("Error: ", error);
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
 
 exports.resetPassword = async (req, res) => {};
 
-// 6:34:39
+// 6:55:09
