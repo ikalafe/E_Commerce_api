@@ -21,6 +21,16 @@ const validateUser = [
     .withMessage("لطفا یک شماره تلفن معتبر وارد کنید."),
 ];
 
+const validatePassword = [
+  body("newPassword")
+    .isLength({ min: 8 })
+    .withMessage("رمز عبور باید حداقل 8 کاراکتر باشد.")
+    .isStrongPassword()
+    .withMessage(
+      "رمز عبور باید حداقل ۸ کاراکتر باشد و شامل حداقل یک حرف بزرگ، یک عدد و یک کاراکتر خاص (!@#$%^&*) باشد."
+    ),
+];
+
 router.post("/login", authController.login);
 
 router.post("/register", validateUser, authController.register);
@@ -31,6 +41,6 @@ router.post("/forgot-password", authController.forgotPassword);
 
 router.post("/verify-otp", authController.verifyPasswordResetOtp);
 
-router.post("/reset-password", authController.resetPassword);
+router.post("/reset-password", validatePassword, authController.resetPassword);
 
 module.exports = router;
