@@ -13,8 +13,10 @@ app.use(bodyParser.json());
 app.use(morgan("tiny"));
 app.use(cors());
 app.options("*", cors());
+app.use(authJwt());
 
 const authRouter = require("./routes/auth");
+const authJwt = require("./middlewares/jwt");
 app.use(`${API}/`, authRouter);
 
 const hostname = env.HOST_NAME;
