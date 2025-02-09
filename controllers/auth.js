@@ -172,6 +172,38 @@ exports.verifyPasswordResetOtp = async (req, res) => {
   }
 };
 
-exports.resetPassword = async (req, res) => {};
+exports.resetPassword = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const errorMessage = errors.array().map((error) => ({
+      field: error.path,
+      message: error.msg,
+    }));
+    return res.status(400).json({ errors: errorMessage });
+  }
+  try {
+    const { email, newPassword } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "کاربر پیدا نشد ):" });
+    }
+
+    if (user.resetPasswordOtp !== 1) {
+      return res.status(401).json({
+        message: "لطفاً کد تأیید را قبل از بازنشانی رمز عبور تأیید کنید.",
+      });
+    }
+
+    user.passwordHash = bcrypt.hashSync(newPassword, 8);
+    user.resetPasswordOtp = undefined;
+    await user.save();
+
+    return res.json({ message: "رمز عبور با موفقیت تغییر یافت (:" });
+  } catch (error) {
+    console.error("Error: ", error);
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
 
 // 6:55:09
