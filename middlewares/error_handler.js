@@ -12,7 +12,7 @@ async function errorHandler(error, req, res, next) {
     try {
       const tokenHeader = req.header("Authorization");
       const accessToken = tokenHeader?.split(" ")[1];
-      let token = await Token.findOne({
+      const token = await Token.findOne({
         accessToken,
         refreshToken: { $exists: true },
       });
@@ -37,8 +37,28 @@ async function errorHandler(error, req, res, next) {
 
       const newAccessToken = jwt.sign(
         { id: user.id, isAdmin: user.isAdmin },
-        process.env.ACCESS_TOKEN_SECRET
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: "24h",
+        }
       );
+
+      req.headers["authorization"] = `Brarer ${newAccessToken}`;
+
+      await Token.updateOne(
+        { _id: token.id },
+        { accessToken: newAccessToken }
+      ).exec();
+
+      res.set("Authorization", `Bearer ${newAccessToken}`);
+
+      /* 
+        New Request -> check if error contains jwt expired -> make new request for new token ->
+        save the new access token -> make initial request again with new token 
+      */
+      // New request -> check if response carries new token and save if it exists
+
+      return next();
     } catch (error) {
       return res
         .status(401)
@@ -47,4 +67,4 @@ async function errorHandler(error, req, res, next) {
   }
 }
 
-// 7:40:19
+module.exports = errorHandler;
