@@ -22,9 +22,6 @@ app.use(errorHandler);
 const authRouter = require("./routes/auth");
 
 app.use(`${API}/`, authRouter);
-app.get(`${API}/users`, (req, res) => {
-  return res.json([{ name: "dani", org: "kalafe", age: 150 }]);
-});
 
 const hostname = env.HOST_NAME;
 const port = env.PORT;
