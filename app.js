@@ -1,9 +1,12 @@
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
-const mongoose = require("mongoose");
 require("dotenv/config");
+
+const authJwt = require("./middlewares/jwt");
+const errorHandler = require("./middlewares/error_handler");
 
 const app = express();
 const env = process.env;
@@ -14,10 +17,14 @@ app.use(morgan("tiny"));
 app.use(cors());
 app.options("*", cors());
 app.use(authJwt());
+app.use(errorHandler);
 
 const authRouter = require("./routes/auth");
-const authJwt = require("./middlewares/jwt");
+
 app.use(`${API}/`, authRouter);
+app.get(`${API}/users`, (req, res) => {
+  return res.json([{ name: "dani", org: "kalafe", age: 150 }]);
+});
 
 const hostname = env.HOST_NAME;
 const port = env.PORT;
@@ -36,5 +43,3 @@ app.listen(port, hostname, async () => {
   console.log(`Server running at http://${hostname}:${port}`);
   console.log("connecting to database...");
 });
-
-// 1:37:25
