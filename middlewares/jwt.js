@@ -30,7 +30,7 @@ function authJwt() {
 async function isRevoked(req, jwt) {
   const authHeader = req.header("Authorization");
 
-  if (!authHeader.startswith("Bearer ")) {
+  if (!authHeader.startsWith("Bearer ")) {
     return true;
   }
 
