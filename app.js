@@ -20,8 +20,12 @@ app.use(authJwt());
 app.use(errorHandler);
 
 const authRouter = require("./routes/auth");
+const userRouter = require("./routes/users");
+const adminRouter = require("./routes/admin");
 
 app.use(`${API}/`, authRouter);
+app.use(`${API}/users`, userRouter);
+app.use(`${API}/admin`, adminRouter);
 
 const hostname = env.HOST_NAME;
 const port = env.PORT;
