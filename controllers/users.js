@@ -23,7 +23,7 @@ exports.getUserById = async (req, res) => {
     }
 
     const user = await User.findById(req.params.id).select(
-      "-passwordHash -resetPasswordOtp -resetPasswordOtpExpires"
+      "-passwordHash -resetPasswordOtp -resetPasswordOtpExpires -cart"
     );
 
     if (!user) {
@@ -51,12 +51,18 @@ exports.updateUser = async (req, res) => {
       id,
       { name, email, phone, isAdmin },
       { new: true, runValidators: true }
-    ).select("-passwordHash -resetPasswordOtp -resetPasswordOtpExpires");
+    ).select("-passwordHash -resetPasswordOtp -resetPasswordOtpExpires -cart");
     if (!updateUser) {
       return res.status(404).json({ message: "کاربر یافت نشد." });
     }
 
-    return res.json({ message: "کاربر با موفقیت به روز رسانی شد.", user: updateUser });
+    // user.passwordHash = undefined;
+    // user.cart = undefined;
+    
+    return res.json({
+      message: "کاربر با موفقیت به روز رسانی شد.",
+      user: updateUser,
+    });
   } catch (error) {
     console.error("Error: ", error);
     return res.status(500).json({ type: error.name, message: error.message });
