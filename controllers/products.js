@@ -49,6 +49,43 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+exports.searchProducts = async (req, res) => {
+  try {
+    const searchTerm = req.query.q?.trim() || "";
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = 10;
+
+    let query = {};
+
+    if (req.query.category) {
+      query = { category: req.query.category };
+      if (req.query.genderAgeCategory) {
+        query["genderAgeCategory"] = req.query.genderAgeCategory.toLowerCase();
+      }
+    } else if (req.query.genderAgeCategory) {
+      query = {
+        genderAgeCategory: req.query.genderAgeCategory.toLowerCase(),
+      };
+    }
+    if (searchTerm) {
+      query = {
+        ...query,
+        $text: {
+          $search: searchTerm,
+          $language: "english",
+          $caseSensitive: false,
+        },
+      };
+    }
+    const searchResults = await Product.find(query)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+  } catch (error) {
+    console.error("Error: ", error);
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
+
 exports.getProductById = async (req, res) => {};
 
-exports.searchProducts = async (req, res) => {};
+// 1:12:27
