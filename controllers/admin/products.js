@@ -1,6 +1,7 @@
 const { Product } = require("../../models/product");
-const media_helper = require("../../helper/media_helper");
 const { Category } = require("../../models/category");
+const { Review } = require("../../models/review");
+const media_helper = require("../../helper/media_helper");
 const util = require("util");
 const multer = require("multer");
 const { default: mongoose } = require("mongoose");
@@ -18,7 +19,25 @@ exports.getProductsCount = async (req, res) => {
   }
 };
 
-exports.getProducts = async (req, res) => {};
+exports.getProducts = async (req, res) => {
+  try {
+    const page = req.query.page || 1;
+    const pageSize = 10;
+
+    const products = await Product.find()
+      .select("-reviews -rating")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize);
+    if (!products) {
+      return res.status(404).json({ message: "محصولی یافت نشد." });
+    }
+
+    return res.json(products);
+  } catch (error) {
+    console.error("Error: ", error);
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
 
 exports.addProduct = async (req, res) => {
   try {
@@ -176,8 +195,60 @@ exports.editProduct = async (req, res) => {
   }
 };
 
-exports.deleteProductImages = async (req, res) => {};
+exports.deleteProductImages = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const { deletedImageUrls } = req.body;
 
-exports.deleteProduct = async (req, res) => {};
+    if (
+      !mongoose.isValidObjectId(productId) ||
+      !Array.isArray(deletedImageUrls)
+    ) {
+      return res.status(400).json({ message: "اطلاعات نامعتبر است." });
+    }
+
+    await media_helper.deleteImages(deletedImageUrls);
+    const product = await Product.findById(productId);
+
+    if (!product) return res.status(404).json({ message: "محصول یافت نشد." });
+
+    product.images = product.images.filter(
+      (image) => !deletedImageUrls.includes(image)
+    );
+
+    await product.save();
+
+    return res.status(204).end();
+  } catch (error) {
+    console.error("Error Deleting product images: ", error.message);
+    if (error.code === "ENOENT") {
+      return res.status(404).json({ message: "عکس یافت نشد." });
+    }
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    if (!mongoose.isValidObjectId(productId)) {
+      return res.status(404).json({ message: "محصول نامعتبر است." });
+    }
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: "محصول یافت نشد." });
+    await media_helper.deleteImages(
+      [...product.images, product.image],
+      "ENOENT"
+    );
+
+    await Review.deleteMany({ _id: { $in: product.reviews } });
+
+    await Product.findByIdAndDelete(productId);
+    return res.status(204).end();
+  } catch (error) {
+    console.error("Error: ", error);
+    return res.status(500).json({ type: error.name, message: error.message });
+  }
+};
 
 // 11:17:26
