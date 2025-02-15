@@ -11,6 +11,6 @@ const orderItemSchema = Schema({
 });
 
 orderItemSchema.set("toObject", { virtuals: true });
-orderItemSchema.set("toJson", { virtual: true });
+orderItemSchema.set("toJSON", { virtuals: true });
 
-exports.OrderItem = model("Order", orderItemSchema);
+exports.OrderItem = model("OrderItem", orderItemSchema);
