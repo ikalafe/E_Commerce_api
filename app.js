@@ -22,15 +22,21 @@ app.use(errorHandler);
 const authRouter = require("./routes/auth");
 const userRouter = require("./routes/users");
 const adminRouter = require("./routes/admin");
+const categoriesRouter = require("./routes/categories");
+const productsRouter = require("./routes/products");
 
 app.use(`${API}/`, authRouter);
 app.use(`${API}/users`, userRouter);
 app.use(`${API}/admin`, adminRouter);
+app.use(`${API}/categories`, categoriesRouter);
+app.use(`${API}/products`, productsRouter);
 app.use("/public", express.static(__dirname + "/public"));
 
 const hostname = env.HOST_NAME;
 const port = env.PORT;
 const mongodb = env.MONGODB_CONNECTION_STRING;
+
+require("./helper/cron_job");
 
 mongoose
   .connect(mongodb)
