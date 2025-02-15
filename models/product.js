@@ -38,6 +38,6 @@ productSchema.pre("save", async function (next) {
 productSchema.index({ name: "text", description: "text" });
 
 productSchema.set("toObject", { virtuals: true });
-productSchema.set("toJson", { virtual: true });
+productSchema.set("toJSON", { virtuals: true });
 
 exports.Product = model("Product", productSchema);
