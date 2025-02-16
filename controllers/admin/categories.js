@@ -18,6 +18,7 @@ exports.addCategory = async (req, res) => {
       });
     }
 
+    console.log("req.files:", req.files);
     const image = req.files["image"][0];
     if (!image) return res.status(404).json({ message: "هیچ فایلی یافت نشد!" });
     req.body["image"] = `${req.protocol}://${req.get("host")}/${image.path}`;
